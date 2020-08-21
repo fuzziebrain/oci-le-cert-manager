@@ -1,7 +1,9 @@
 FROM oraclelinux:7-slim as base
 LABEL MAINTAINER="Adrian Png <adrian.png@fuzziebrain.com>"
 
-ENV OCI_CLI_AUTH=instance_principal \
+ENV LC_ALL=en_US.utf-8 \
+    LANG=en_US.utf-8 \
+    OCI_CLI_AUTH=instance_principal \
     DOMAIN=example.com \
     EMAIL=johndoe@example.com \
     LB_OCID=ocid1.loadbalancer.oc1... \
