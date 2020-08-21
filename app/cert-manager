@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+COMMAND=$(echo ${1:-generate} | awk '{print tolower($0)}')
+LE_CERT_NAME=${DOMAIN//\./-}
+
+params=()
+
+if [[ ${USE_STAGING_YN:-N} =~ [yY] ]]; then
+  params+=(--staging)
+fi
+
+case $COMMAND in
+  generate)
+    params+=(certonly)
+    params+=(--authenticator standalone)
+    params+=(--email ${EMAIL})
+    params+=(-d ${DOMAIN})
+    params+=(--cert-name ${LE_CERT_NAME})
+    params+=(--agree-tos)
+    params+=(--no-eff-email)
+    ;;
+  renew)
+    params+=(renew)
+    params+=(--cert-name ${LE_CERT_NAME})
+    ;;
+  *)
+    echo Command $COMMAND unknown. Valid values are \"generate\" or \"renew\".
+    exit 1
+    ;;
+esac
+
+if [[ $DRY_RUN =~ [yY] ]]; then
+  params+=(--dry-run)
+else
+  case $DEPLOY_TARGET in
+    LB)
+      params+=(--post-hook deploy-cert-to-lb)
+      ;;
+    WAF)
+      echo Feature not implemented. Stay tuned!
+      exit 1
+      params+=(--post-hook deploy-cert-to-waf)
+      ;;
+  esac
+fi
+
+certbot ${params[@]}

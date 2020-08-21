@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+CERT_PATH=/etc/letsencrypt/live/${DOMAIN}
+CERT_NAME=${DOMAIN//\./-}_$(date +"%Y%m%d%H%M%S")
+
+if [[ $DRY_RUN =~ [yY] ]]; then
+  echo Exiting as this is a dry run.
+  exit 0
+fi
+
+oci lb certificate create --load-balancer-id ${LB_OCID} \
+  --certificate-name ${CERT_NAME} \
+  --ca-certificate-file ${CERT_PATH}/chain.pem \
+  --private-key-file ${CERT_PATH}/privkey.pem \
+  --public-certificate-file ${CERT_PATH}/cert.pem \
+  --wait-for-state SUCCEEDED
+
+if [ $? -eq 0 ]; then
+  echo "Successfully created certificate."
+
+  if [ ! -z "$LISTENER_NAME" ]; then
+    LB_DATA=$(oci lb load-balancer get --load-balancer-id $LB_OCID)
+
+    DEFAULT_BACKEND_SET=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."default-backend-set-name"')
+    LISTENER_PORT=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name].port')
+    LISTENER_PROTOCOL=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name].protocol')
+    PATH_ROUTE_SET_NAME=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."path-route-set-name"')
+    CONNECTION_IDLE_TIMEOUT=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."connection-configuration"."idle-timeout"')
+    BACKEND_TCP_PROXY_PROTOCOL_VERSION=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."connection-configuration"."backend-tcp-proxy-protocol-version"')
+    RULE_SET_NAMES=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."rule-set-names"')
+    HOSTNAME_NAMES=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."hostname-names"')
+    SSL_VERIFY_DEPTH=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."ssl-configuration"."verify-depth"')
+    SSL_VERIFY_PEER_CERTIFICATE=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."ssl-configuration"."verify-peer-certificate"')
+ 
+    params=()
+    params+=(--load-balancer-id ${LB_OCID})
+    params+=(--default-backend-set-name ${DEFAULT_BACKEND_SET})
+    if [[ $BACKEND_TCP_PROXY_PROTOCOL_VERSION =~ '^[0-9]+$' ]]; then
+      params+=(--connection-configuration-backend-tcp-proxy-protocol-version ${BACKEND_TCP_PROXY_PROTOCOL_VERSION})
+    fi
+    params+=(--listener-name ${LISTENER_NAME})
+    params+=(--port ${LISTENER_PORT})
+    params+=(--protocol ${LISTENER_PROTOCOL})
+    params+=(--path-route-set-name ${PATH_ROUTE_SET_NAME})
+    params+=(--rule-set-names ${RULE_SET_NAMES})
+    params+=(--connection-configuration-idle-timeout ${CONNECTION_IDLE_TIMEOUT})
+    params+=(--ssl-verify-depth ${SSL_VERIFY_DEPTH})
+    params+=(--ssl-verify-peer-certificate ${SSL_VERIFY_PEER_CERTIFICATE})
+    params+=(--ssl-certificate-name ${CERT_NAME})
+    params+=(--force)
+    params+=(--wait-for-state SUCCEEDED)
+
+    oci lb listener update \
+      ${params[@]}
+  else
+    echo "Please remember to create the HTTPS listener and assign the certificate $CERT_NAME manually."
+  fi
+else
+  echo "Failed to create certificate."
+fi
