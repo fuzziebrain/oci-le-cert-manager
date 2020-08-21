@@ -41,7 +41,7 @@ if [ $? -eq 0 ]; then
       '.data.listeners[$listener_name]."ssl-configuration"."verify-depth"')
     SSL_VERIFY_PEER_CERTIFICATE=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
       '.data.listeners[$listener_name]."ssl-configuration"."verify-peer-certificate"')
- 
+
     params=()
     params+=(--load-balancer-id ${LB_OCID})
     params+=(--default-backend-set-name ${DEFAULT_BACKEND_SET})
@@ -53,6 +53,7 @@ if [ $? -eq 0 ]; then
     params+=(--protocol ${LISTENER_PROTOCOL})
     params+=(--path-route-set-name ${PATH_ROUTE_SET_NAME})
     params+=(--rule-set-names ${RULE_SET_NAMES})
+    params+=(--hostname-names ${HOSTNAME_NAMES})
     params+=(--connection-configuration-idle-timeout ${CONNECTION_IDLE_TIMEOUT})
     params+=(--ssl-verify-depth ${SSL_VERIFY_DEPTH})
     params+=(--ssl-verify-peer-certificate ${SSL_VERIFY_PEER_CERTIFICATE})
