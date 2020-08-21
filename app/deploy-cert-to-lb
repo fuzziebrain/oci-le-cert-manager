@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-CERT_PATH=/etc/letsencrypt/live/${DOMAIN}
-CERT_NAME=${DOMAIN//\./-}_$(date +"%Y%m%d%H%M%S")
+LE_CERT_NAME=${DOMAIN//\./-}
+CERT_NAME=${LE_CERT_NAME}_$(date +"%Y%m%d%H%M%S")
+CERT_PATH=/etc/letsencrypt/live/${LE_CERT_NAME}
 
 if [[ $DRY_RUN =~ [yY] ]]; then
   echo Exiting as this is a dry run.
