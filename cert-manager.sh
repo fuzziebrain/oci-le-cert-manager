@@ -4,6 +4,10 @@ DIRNAME=$(dirname ${0})
 COMMAND=${1:-generate}
 ENV_FILENAME=${2:-}
 
+if [[ $DIRNAME = '.' ]]; then 
+   DIRNAME=$PWD
+fi
+
 docker run --rm \
   -p 8000:80 \
   --env-file ${DIRNAME}/${ENV_FILENAME} \
