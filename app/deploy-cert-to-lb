@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
-LE_CERT_NAME=${DOMAIN//\./-}
+# Split into an array as we might have more than one domains to add.
+IFS=',' read -ra DOMAIN_ARRAY <<< $DOMAIN
+
+# Set the LE cert name based on the first domain provided.
+LE_CERT_NAME=${DOMAIN_ARRAY[0]//\./-}
+
 CERT_NAME=${LE_CERT_NAME}_$(date +"%Y%m%d%H%M%S")
 CERT_PATH=/etc/letsencrypt/live/${LE_CERT_NAME}
 

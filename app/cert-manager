@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
 COMMAND=$(echo ${1:-generate} | awk '{print tolower($0)}')
-LE_CERT_NAME=${DOMAIN//\./-}
+
+# Split into an array as we might have more than one domains to add.
+IFS=',' read -ra DOMAIN_ARRAY <<< $DOMAIN
+
+# Set the LE cert name based on the first domain provided.
+LE_CERT_NAME=${DOMAIN_ARRAY[0]//\./-}
 
 params=()
 
@@ -14,7 +19,10 @@ case $COMMAND in
     params+=(certonly)
     params+=(--authenticator standalone)
     params+=(--email ${EMAIL})
-    params+=(-d ${DOMAIN})
+    for domain in "${DOMAIN_ARRAY[@]}"
+    do
+      params+=(-d $domain)
+    done
     params+=(--cert-name ${LE_CERT_NAME})
     params+=(--agree-tos)
     params+=(--no-eff-email)
