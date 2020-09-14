@@ -70,6 +70,10 @@ The script assumes that you have a public load balancer created. In addition, yo
     ├── domain.env.sample
     └── logs
     ```
+1. Change the working directory:
+    ```bash
+    cd $APP_HOME
+    ```
 1. Create the `.oci` directory for storing the required OCI configuration file:
     ```bash
     mkdir -p $APP_HOME/.oci
