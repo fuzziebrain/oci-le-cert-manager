@@ -109,7 +109,8 @@ The script assumes that you have a public load balancer created. In addition, yo
 
     > **IMPORTANT**
     >
-    > If you don't already have a listener setup for HTTPS, then exclude the `LISTENER_NAME` variable for now. Once the certificate has been deployed to the load balancer specified by the OCID, you may use that certificate to create the required listener supporting SSL communications.
+    > * If you don't already have a listener setup for HTTPS, then exclude the `LISTENER_NAME` variable for now. Once the certificate has been deployed to the load balancer specified by the OCID, you may use that certificate to create the required listener supporting SSL communications.
+    > * You may add more than one domains to the certificate. Add assign them as a comma-delimited list to the `DOMAIN` variable.
 1. Generate and deploy the certificate. If the `LISTENER_NAME` is defined, then the new certificate will be assigned to the listener as well.
     ```bash
     $APP_HOME/cert-manager.sh -a generate -f example-com.env -p 8000
@@ -119,7 +120,7 @@ The script assumes that you have a public load balancer created. In addition, yo
 
 1. Add to the crontab as *root*:
     ```
-    0 2 * * * opc /opt/docker/oci-le-cert-manager/cert-manager.sh -a renew -f example-com.env -p 8000 >> /opt/docker/oci-le-cert-manager/logs/le-apex-example-com.log
+    0 2 * * * opc /opt/docker/oci-le-cert-manager/cert-manager.sh -a renew -f example-com.env -p 8000 >> /opt/docker/oci-le-cert-manager/logs/le-example-com.log
     ```
 
 ## TODO
