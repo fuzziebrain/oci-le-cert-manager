@@ -56,8 +56,7 @@ if [ $? -eq 0 ]; then
     SERVER_ORDER_PREFERENCE=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
       '.data.listeners[$listener_name]."ssl-configuration"."server-order-preference"')
 
-    params=()
-    params+=${oci_defaults[@]}
+    params=(${oci_defaults[@]})
     params+=(--default-backend-set-name ${DEFAULT_BACKEND_SET})
     if [[ $BACKEND_TCP_PROXY_PROTOCOL_VERSION =~ '^[0-9]+$' ]]; then
       params+=(--connection-configuration-backend-tcp-proxy-protocol-version ${BACKEND_TCP_PROXY_PROTOCOL_VERSION})
