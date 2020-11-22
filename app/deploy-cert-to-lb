@@ -16,9 +16,8 @@ fi
 
 oci lb certificate create --load-balancer-id ${LB_OCID} \
   --certificate-name ${CERT_NAME} \
-  --ca-certificate-file ${CERT_PATH}/chain.pem \
   --private-key-file ${CERT_PATH}/privkey.pem \
-  --public-certificate-file ${CERT_PATH}/cert.pem \
+  --public-certificate-file ${CERT_PATH}/fullchain.pem \
   --wait-for-state SUCCEEDED
 
 if [ $? -eq 0 ]; then
