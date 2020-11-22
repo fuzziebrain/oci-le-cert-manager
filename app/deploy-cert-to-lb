@@ -14,7 +14,11 @@ if [[ $DRY_RUN =~ [yY] ]]; then
   exit 0
 fi
 
+# Default parameters for oci command
 oci_defaults=()
+# We use dynamic groups authentication
+oci_defaults+=(--auth instance_principal)
+# Load balancer OCID defined in enviroment file
 oci_defaults+=(--load-balancer-id ${LB_OCID})
 
 oci lb certificate create ${oci_defaults[@]} \
@@ -71,20 +75,21 @@ if [ $? -eq 0 ]; then
     params+=(--ssl-verify-depth ${SSL_VERIFY_DEPTH})
     params+=(--ssl-verify-peer-certificate ${SSL_VERIFY_PEER_CERTIFICATE})
     params+=(--ssl-certificate-name ${CERT_NAME})
-    params+=(--cipher-suite-name ${CIPHER_SUITE_NAME});
-    params+=(--protocols ${PROTOCOLS});
-    params+=(--server-order-preference ${SERVER_ORDER_PREFERENCE});
+    params+=(--cipher-suite-name ${CIPHER_SUITE_NAME})
+    params+=(--protocols ${PROTOCOLS})
+    params+=(--server-order-preference ${SERVER_ORDER_PREFERENCE})
     params+=(--force)
     params+=(--wait-for-state SUCCEEDED)
 
     oci lb listener update \
       ${params[@]}
-    
+
     # Delete old certificates if listenet update succeeded
-    if [ $? -eq 0 ]; then
-    
+    # and operation is permitted in enviroment file
+    if [ $? -eq 0 ] && [[ $DEL_OLD_CERTS =~ [yY] ]]; then
+
       # Get existing certificate list for deleting old certificates
-      CERT_LIST=$(oci lb certificate list ${oci_defaults[@]});
+      CERT_LIST=$(oci lb certificate list ${oci_defaults[@]})
 
       # Loop certificate names that start with domain name
       echo ${CERT_LIST} | jq -rc --arg cert_prefix ${LE_CERT_NAME} \
