@@ -26,7 +26,7 @@
 1. [Create a dynamic group](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingdynamicgroups.htm#ariaid-title9), e.g. *WebServers*, and assign the instance that where the scripts will run on.
 1. [Create a policy](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingpolicies.htm#ariaid-title6), e.g. *LoadBalancerManagementPolicy*, to allow the dynamic group to create certificates and update load balancer's listeners in the specified compartment. The simplest statement to get started with, is this:
     ```
-    allow dynamic-group WebServers to manage load-balancers in compartment MyCompartment
+    allow dynamic-group WebServers to use load-balancers in compartment MyCompartment
     ```
 
    > **NOTE**

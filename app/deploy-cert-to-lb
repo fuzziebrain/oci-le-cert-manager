@@ -14,18 +14,24 @@ if [[ $DRY_RUN =~ [yY] ]]; then
   exit 0
 fi
 
-oci lb certificate create --load-balancer-id ${LB_OCID} \
+# Default parameters for oci command
+oci_defaults=()
+# We use dynamic groups authentication
+oci_defaults+=(--auth instance_principal)
+# Load balancer OCID defined in enviroment file
+oci_defaults+=(--load-balancer-id ${LB_OCID})
+
+oci lb certificate create ${oci_defaults[@]} \
   --certificate-name ${CERT_NAME} \
-  --ca-certificate-file ${CERT_PATH}/chain.pem \
   --private-key-file ${CERT_PATH}/privkey.pem \
-  --public-certificate-file ${CERT_PATH}/cert.pem \
+  --public-certificate-file ${CERT_PATH}/fullchain.pem \
   --wait-for-state SUCCEEDED
 
 if [ $? -eq 0 ]; then
   echo "Successfully created certificate."
 
   if [ ! -z "$LISTENER_NAME" ]; then
-    LB_DATA=$(oci lb load-balancer get --load-balancer-id $LB_OCID)
+    LB_DATA=$(oci lb load-balancer get ${oci_defaults[@]})
 
     DEFAULT_BACKEND_SET=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
       '.data.listeners[$listener_name]."default-backend-set-name"')
@@ -47,9 +53,14 @@ if [ $? -eq 0 ]; then
       '.data.listeners[$listener_name]."ssl-configuration"."verify-depth"')
     SSL_VERIFY_PEER_CERTIFICATE=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
       '.data.listeners[$listener_name]."ssl-configuration"."verify-peer-certificate"')
+    CIPHER_SUITE_NAME=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
+      '.data.listeners[$listener_name]."ssl-configuration"."cipher-suite-name"')
+    PROTOCOLS=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
+      '.data.listeners[$listener_name]."ssl-configuration"."protocols"')
+    SERVER_ORDER_PREFERENCE=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
+      '.data.listeners[$listener_name]."ssl-configuration"."server-order-preference"')
 
-    params=()
-    params+=(--load-balancer-id ${LB_OCID})
+    params=(${oci_defaults[@]})
     params+=(--default-backend-set-name ${DEFAULT_BACKEND_SET})
     if [[ $BACKEND_TCP_PROXY_PROTOCOL_VERSION =~ '^[0-9]+$' ]]; then
       params+=(--connection-configuration-backend-tcp-proxy-protocol-version ${BACKEND_TCP_PROXY_PROTOCOL_VERSION})
@@ -64,11 +75,36 @@ if [ $? -eq 0 ]; then
     params+=(--ssl-verify-depth ${SSL_VERIFY_DEPTH})
     params+=(--ssl-verify-peer-certificate ${SSL_VERIFY_PEER_CERTIFICATE})
     params+=(--ssl-certificate-name ${CERT_NAME})
+    params+=(--cipher-suite-name ${CIPHER_SUITE_NAME})
+    params+=(--protocols ${PROTOCOLS})
+    params+=(--server-order-preference ${SERVER_ORDER_PREFERENCE})
     params+=(--force)
     params+=(--wait-for-state SUCCEEDED)
 
     oci lb listener update \
       ${params[@]}
+
+    # Delete old certificates if listenet update succeeded
+    # and operation is permitted in enviroment file
+    if [ $? -eq 0 ] && [[ $DEL_OLD_CERTS =~ [yY] ]]; then
+
+      # Get existing certificate list for deleting old certificates
+      CERT_LIST=$(oci lb certificate list ${oci_defaults[@]})
+
+      # Loop certificate names that start with domain name
+      echo ${CERT_LIST} | jq -rc --arg cert_prefix ${LE_CERT_NAME} \
+        '.data[]."certificate-name" | select(startswith($cert_prefix))' \
+      | while IFS= read -r CERT_OLD;
+      do
+        # Delete certificate if certificate name is not same that just uploaded
+        # Note! deletion will fail if certificate is used in listener or backend set
+        if [[ "${CERT_NAME}" != "${CERT_OLD}" ]]; then
+          oci lb certificate delete ${oci_defaults[@]} \
+            --certificate-name "${CERT_OLD}" \
+            --force
+        fi
+      done
+    fi
   else
     echo "Please remember to create the HTTPS listener and assign the certificate $CERT_NAME manually."
   fi
