@@ -47,6 +47,13 @@ if [ $? -eq 0 ]; then
       '.data.listeners[$listener_name]."ssl-configuration"."verify-depth"')
     SSL_VERIFY_PEER_CERTIFICATE=$(echo $LB_DATA | jq -rc --arg listener_name "$LISTENER_NAME" \
       '.data.listeners[$listener_name]."ssl-configuration"."verify-peer-certificate"')
+      
+    CIPHER_SUITE_NAME=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
+      '.data.listeners[$listener_name]."ssl-configuration"."cipher-suite-name"')
+    PROTOCOLS=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
+      '.data.listeners[$listener_name]."ssl-configuration"."protocols"')
+    SERVER_ORDER_PREFERENCE=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
+      '.data.listeners[$listener_name]."ssl-configuration"."server-order-preference"')
 
     params=()
     params+=(--load-balancer-id ${LB_OCID})
@@ -64,11 +71,16 @@ if [ $? -eq 0 ]; then
     params+=(--ssl-verify-depth ${SSL_VERIFY_DEPTH})
     params+=(--ssl-verify-peer-certificate ${SSL_VERIFY_PEER_CERTIFICATE})
     params+=(--ssl-certificate-name ${CERT_NAME})
+
+    params+=(--cipher-suite-name ${CIPHER_SUITE_NAME});
+    params+=(--protocols ${PROTOCOLS});
+    params+=(--server-order-preference ${SERVER_ORDER_PREFERENCE});
+
     params+=(--force)
     params+=(--wait-for-state SUCCEEDED)
 
     oci lb listener update \
-      ${params[@]}
+      ${params[@]}    
   else
     echo "Please remember to create the HTTPS listener and assign the certificate $CERT_NAME manually."
   fi
