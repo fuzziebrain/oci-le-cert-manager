@@ -59,6 +59,8 @@ if [ $? -eq 0 ]; then
       '.data.listeners[$listener_name]."ssl-configuration"."protocols"')
     SERVER_ORDER_PREFERENCE=$(echo $LB_DATA | jq -rc --arg listener_name "${LISTENER_NAME}" \
       '.data.listeners[$listener_name]."ssl-configuration"."server-order-preference"')
+    ROUTING_POLICY_NAME=$(echo $LB_DATA | jq -r --arg listener_name "$LISTENER_NAME" \
+      '.data.listeners[$listener_name]."routing-policy-name"')
 
     params=(${oci_defaults[@]})
     params+=(--default-backend-set-name ${DEFAULT_BACKEND_SET})
@@ -68,7 +70,9 @@ if [ $? -eq 0 ]; then
     params+=(--listener-name ${LISTENER_NAME})
     params+=(--port ${LISTENER_PORT})
     params+=(--protocol ${LISTENER_PROTOCOL})
-    params+=(--path-route-set-name ${PATH_ROUTE_SET_NAME})
+    if [[ ! -z "$PATH_ROUTE_SET_NAME" ]]; then
+      params+=(--path-route-set-name ${PATH_ROUTE_SET_NAME})
+    fi
     params+=(--rule-set-names ${RULE_SET_NAMES})
     params+=(--hostname-names ${HOSTNAME_NAMES})
     params+=(--connection-configuration-idle-timeout ${CONNECTION_IDLE_TIMEOUT})
@@ -78,6 +82,9 @@ if [ $? -eq 0 ]; then
     params+=(--cipher-suite-name ${CIPHER_SUITE_NAME})
     params+=(--protocols ${PROTOCOLS})
     params+=(--server-order-preference ${SERVER_ORDER_PREFERENCE})
+    if [[ ! -z "$ROUTING_POLICY_NAME" ]]; then
+      params+=(--routing-policy-name ${ROUTING_POLICY_NAME})
+    fi
     params+=(--force)
     params+=(--wait-for-state SUCCEEDED)
 
