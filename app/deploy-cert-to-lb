@@ -70,7 +70,7 @@ if [ $? -eq 0 ]; then
     params+=(--listener-name ${LISTENER_NAME})
     params+=(--port ${LISTENER_PORT})
     params+=(--protocol ${LISTENER_PROTOCOL})
-    if [[ ! -z "$PATH_ROUTE_SET_NAME" ]]; then
+    if [[ ! -z "$PATH_ROUTE_SET_NAME" && "$PATH_ROUTE_SET_NAME" != "null" ]]; then
       params+=(--path-route-set-name ${PATH_ROUTE_SET_NAME})
     fi
     params+=(--rule-set-names ${RULE_SET_NAMES})
@@ -82,7 +82,7 @@ if [ $? -eq 0 ]; then
     params+=(--cipher-suite-name ${CIPHER_SUITE_NAME})
     params+=(--protocols ${PROTOCOLS})
     params+=(--server-order-preference ${SERVER_ORDER_PREFERENCE})
-    if [[ ! -z "$ROUTING_POLICY_NAME" ]]; then
+    if [[ ! -z "$ROUTING_POLICY_NAME" && "$ROUTING_POLICY_NAME" != "null" ]]; then
       params+=(--routing-policy-name ${ROUTING_POLICY_NAME})
     fi
     params+=(--force)
