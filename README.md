@@ -120,7 +120,7 @@ The script assumes that you have a public load balancer created. In addition, yo
 
 1. Add to the crontab as *root*:
     ```
-    0 2 * * * opc /opt/docker/oci-le-cert-manager/cert-manager.sh -a renew -f example-com.env -p 8000 >> /opt/docker/oci-le-cert-manager/logs/le-example-com.log
+    0 2 * * * opc cd /opt/docker/oci-le-cert-manager && ./cert-manager.sh -a renew -f example-com.env -p 8000 >> ./logs/le-example-com.log
     ```
 
 ## TODO
