@@ -20,6 +20,7 @@ RUN yum install -y \
         python3 \
         python3-pip && \
     rm -rf /var/cache/yum && \
+    pip3 install --upgrade pip && \
     pip3 install -r /tmp/requirements.txt && \
     rm -f /tmp/requirements.txt
 
